@@ -3,26 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Shopping List</title>
 
-    <title>Shopping List</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-    <link rel="stylesheet" href="style.css">
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #141e30, #243b55);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 700px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        h2 {
+            margin-top: 25px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        button {
+            border: none;
+            padding: 13px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            background: #4facfe;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        #lists {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .list-button {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .list-button.active {
+            background: #4facfe;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 20px 0;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 14px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+
+        li span {
+            flex: 1;
+            font-size: 17px;
+        }
+
+        li input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .delete {
+            background: #ff4b5c;
+            padding: 8px 12px;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 600px) {
+            .app {
+                padding: 20px;
+            }
+
+            .row {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
     <div class="app">
 
-        <h1>🛒 Shopping List</h1>
+        <h1>🛒 My Shopping List</h1>
 
-        <div class="new-list">
+        <div class="row">
             <input
                 id="listName"
                 type="text"
                 placeholder="New list name"
             >
 
-            <button onclick="createList()">
+            <button id="createListButton">
                 Create List
             </button>
         </div>
@@ -33,14 +167,14 @@
 
         <h2 id="currentListName">My List</h2>
 
-        <div class="add-item">
+        <div class="row">
             <input
                 id="itemInput"
                 type="text"
                 placeholder="Add an item..."
             >
 
-            <button onclick="addItem()">
+            <button id="addButton">
                 Add
             </button>
         </div>
@@ -49,7 +183,278 @@
 
     </div>
 
-    <script src="script.js"></script>
+
+    <script>
+
+        let lists = [
+            {
+                name: "My List",
+                items: []
+            }
+        ];
+
+        let currentList = 0;
+
+
+        function save() {
+            localStorage.setItem(
+                "shoppingLists",
+                JSON.stringify(lists)
+            );
+        }
+
+
+        function load() {
+
+            const saved =
+                localStorage.getItem("shoppingLists");
+
+            if (saved) {
+                lists = JSON.parse(saved);
+            }
+
+            if (lists.length === 0) {
+                lists = [
+                    {
+                        name: "My List",
+                        items: []
+                    }
+                ];
+            }
+
+            currentList = 0;
+        }
+
+
+        function createList() {
+
+            const input =
+                document.getElementById("listName");
+
+            const name =
+                input.value.trim();
+
+            if (name === "") {
+                return;
+            }
+
+            lists.push({
+                name: name,
+                items: []
+            });
+
+            currentList =
+                lists.length - 1;
+
+            input.value = "";
+
+            save();
+            show();
+        }
+
+
+        function addItem() {
+
+            const input =
+                document.getElementById("itemInput");
+
+            const name =
+                input.value.trim();
+
+            if (name === "") {
+                return;
+            }
+
+            lists[currentList].items.push({
+                name: name,
+                completed: false
+            });
+
+            input.value = "";
+
+            save();
+            show();
+        }
+
+
+        function deleteItem(index) {
+
+            lists[currentList].items.splice(
+                index,
+                1
+            );
+
+            save();
+            show();
+        }
+
+
+        function completeItem(index) {
+
+            lists[currentList].items[index].completed =
+                !lists[currentList].items[index].completed;
+
+            save();
+            show();
+        }
+
+
+        function selectList(index) {
+
+            currentList = index;
+
+            show();
+        }
+
+
+        function show() {
+
+            const listsContainer =
+                document.getElementById("lists");
+
+            const itemsContainer =
+                document.getElementById("items");
+
+            const title =
+                document.getElementById("currentListName");
+
+
+            listsContainer.innerHTML = "";
+            itemsContainer.innerHTML = "";
+
+
+            lists.forEach(function(list, index) {
+
+                const button =
+                    document.createElement("button");
+
+                button.textContent = list.name;
+
+                button.className = "list-button";
+
+
+                if (index === currentList) {
+                    button.classList.add("active");
+                }
+
+
+                button.addEventListener(
+                    "click",
+                    function() {
+                        selectList(index);
+                    }
+                );
+
+
+                listsContainer.appendChild(button);
+
+            });
+
+
+            title.textContent =
+                lists[currentList].name;
+
+
+            lists[currentList].items.forEach(
+                function(item, index) {
+
+                    const li =
+                        document.createElement("li");
+
+
+                    const checkbox =
+                        document.createElement("input");
+
+                    checkbox.type = "checkbox";
+
+                    checkbox.checked =
+                        item.completed;
+
+
+                    checkbox.addEventListener(
+                        "change",
+                        function() {
+                            completeItem(index);
+                        }
+                    );
+
+
+                    const text =
+                        document.createElement("span");
+
+                    text.textContent =
+                        item.name;
+
+
+                    if (item.completed) {
+                        text.classList.add("completed");
+                    }
+
+
+                    const deleteButton =
+                        document.createElement("button");
+
+                    deleteButton.textContent =
+                        "Delete";
+
+                    deleteButton.className =
+                        "delete";
+
+
+                    deleteButton.addEventListener(
+                        "click",
+                        function() {
+                            deleteItem(index);
+                        }
+                    );
+
+
+                    li.appendChild(checkbox);
+                    li.appendChild(text);
+                    li.appendChild(deleteButton);
+
+                    itemsContainer.appendChild(li);
+                }
+            );
+        }
+
+
+        document
+            .getElementById("addButton")
+            .addEventListener("click", addItem);
+
+
+        document
+            .getElementById("createListButton")
+            .addEventListener("click", createList);
+
+
+        document
+            .getElementById("itemInput")
+            .addEventListener("keydown", function(event) {
+
+                if (event.key === "Enter") {
+                    addItem();
+                }
+
+            });
+
+
+        document
+            .getElementById("listName")
+            .addEventListener("keydown", function(event) {
+
+                if (event.key === "Enter") {
+                    createList();
+                }
+
+            });
+
+
+        load();
+        show();
+
+    </script>
 
 </body>
 </html>
